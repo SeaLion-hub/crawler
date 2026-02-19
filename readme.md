@@ -10,32 +10,40 @@
 
 이식하려는 단과대학에 맞춰 아래 파일을 사용하세요.
 
-### **1) `engineering.py` (공학 계열)**
-* **적용 가능 대학:** 공과대학, 학부대학, 약학대학, 상경대학
+### **1) `engineering.py` (공학/인문/사회 등 범용 CMS)**
+* **적용 가능 대학:** 공과대학, 학부대학, 약학대학, 상경대학, 문과대학, 생명시스템대학, 신과대학, 사회과학대학, 음악대학, 생활과학대학, 교육과학대학
 * **주요 특징:**
     * 목록에서 '공지' 텍스트가 있는 고정 게시물을 제외하고 **번호가 있는 최신글**만 수집.
     * 상세 페이지에서 `'게시글 내용'` 텍스트 옆의 `<dd>` 태그를 찾아 본문을 추출.
-    * 관리자용 버튼이나 불필요한 UI 요소 자동 제거.
+    * **[🔥 최신 버그 픽스] 관리자용 버튼, 불필요한 UI 요소 및 MS Word 문서 복사 시 발생하는 HTML 주석 찌꺼기(`` 등) 완벽 차단 및 제거.**
 
-### **2) `medicine.py` (의학 계열)**
-* **적용 가능 대학:** 의과대학, 치과대학
+### **2) `science.py` (이과 계열)**
+* **적용 가능 대학:** 이과대학
+* **주요 특징:**
+    * 목록에서 소리 아이콘(`nxb-list-table__notice-icon`)이 있는 고정 공지를 제외하고 일반 게시물만 수집.
+    * 상세 페이지에서 `` 주석 사이의 본문을 정밀 타격하여 추출.
+    * 본문 내 섞여 있는 첨부파일 영역 단두대 커팅 및 Base64 인코딩 이미지 완벽 대응.
+    * 정규식 및 구조 분석을 통한 순수 파일명(용량 텍스트 제외) 추출.
+
+### **3) `medicine.py` (의학 계열)**
+* **적용 가능 대학:** 의과대학, 치과대학, 간호대학
 * **주요 특징:**
     * 목록에서 `bbs-item` 클래스를 감지하여 게시물 리스트만 정확히 추출.
     * 상세 페이지에서 `.fr-view` 클래스를 기준으로 본문 추출.
-    * 본문 하단의 검색엔진용 주석(``) 이후 내용을 잘라냄.
-
-### **3) `business.py` (경영 계열)**
-* **적용 가능 대학:** 경영대학
-* **주요 특징:**
-    * **인코딩 보정:** `CP949(EUC-KR)` 인코딩을 자동 감지하여 한글 깨짐 방지.
-    * 목록에서 `<td class="Subject">`를 타격하여 링크 수집.
-    * 첨부파일이 `.asp` 다운로드 링크 형태인 경우 대응.
+    * 본문 하단의 검색엔진용 주석 이후 내용을 잘라냄.
 
 ### **4) `ai.py` (인공지능 계열)**
 * **적용 가능 대학:** 인공지능융합대학
 * **주요 특징:**
     * 그누보드(GnuBoard) 기반 사이트 대응.
-    * HTML 내부의 `` 주석을 찾아 정밀하게 추출.
+    * HTML 내부의 주석을 찾아 정밀하게 추출.
+
+### **5) `business.py` (경영 계열)**
+* **적용 가능 대학:** 경영대학
+* **주요 특징:**
+    * **인코딩 보정:** `CP949(EUC-KR)` 인코딩을 자동 감지하여 한글 깨짐 방지.
+    * 목록에서 `<td class="Subject">`를 타격하여 링크 수집.
+    * 첨부파일이 `.asp` 다운로드 링크 형태인 경우 대응.
 
 ---
 
@@ -46,12 +54,12 @@
 ### **1. 실제 URL 파라미터 주입 필수**
 크롤러 함수는 URL을 인자로 받도록 설계되어 있습니다. 함수를 호출할 때 **해당 학과의 실제 공지사항 목록 URL**을 넘겨줘야 합니다.
 * **잘못된 예:** `get_engineering_links()` (인자 없음)
-* **올바른 예:** `get_engineering_links("https://engineering.yonsei.ac.kr/engineering/notice.do")`
+* **올바른 예:** `get_notice_links("https://engineering.yonsei.ac.kr/engineering/notice.do")`
 
 ### **2. 추출 로직 수정 금지**
 각 파일의 `scrape_detail` 함수 내부 로직은 수많은 예외 처리가 되어 있습니다.
-* **`label_sibling` 로직 (공대):** 라벨 옆의 태그를 찾는 방식은 절대 바꾸지 마세요.
-* **`fr-view` 및 주석 처리 (의대):** 이를 삭제하면 불필요한 메뉴나 검색어까지 크롤링 됩니다.
+* **`label_sibling` 로직 (공대 등):** 라벨 옆의 태그를 찾는 방식은 절대 바꾸지 마세요.
+* **`fr-view` 및 주석 처리 (의대, 이과대 등):** 이를 삭제하면 불필요한 메뉴, 검색어, 첨부파일 영역까지 크롤링 됩니다.
 * **HTML 표 보존:** `<table>` 태그를 Markdown이나 텍스트로 변환하지 마세요. (시간표, 커리큘럼 표 깨짐 방지)
 
 ### **3. 반환된 본문은 HTML 뷰어로 표시**
@@ -70,7 +78,7 @@ pip install requests beautifulsoup4
 
 ### **사용 코드 예시**
 
-**예시 1: 공과대학 크롤링 (`engineering.py`)**
+**예시 1: 범용 CMS 적용 대학 크롤링 (`engineering.py`)**
 
 ```python
 import engineering as crawler
@@ -79,26 +87,26 @@ import engineering as crawler
 target_url = "[https://engineering.yonsei.ac.kr/engineering/notice.do](https://engineering.yonsei.ac.kr/engineering/notice.do)"
 
 # 2. 목록 가져오기
-links = crawler.get_engineering_links(target_url)
+links = crawler.get_notice_links(target_url)
 
 # 3. 상세 내용 크롤링
 for post in links:
     print(f"번호: {post['no']}")
     # 반환값: 제목, 날짜, 본문(HTML), 이미지리스트, 첨부파일리스트
-    title, date, content, imgs, files = crawler.scrape_engineering_detail(post['url'])
+    title, date, content, imgs, files = crawler.scrape_yonsei_engineering_precise(post['url'])
 
 ```
 
-**예시 2: 의과대학 크롤링 (`medicine.py`)**
+**예시 2: 이과대학 크롤링 (`science.py`)**
 
 ```python
-import medicine as crawler
+import science as crawler
 
-target_url = "[https://medicine.yonsei.ac.kr/medicine/news/notice.do](https://medicine.yonsei.ac.kr/medicine/news/notice.do)"
-links = crawler.get_medicine_notice_links(target_url)
+target_url = "[http://science.yonsei.ac.kr/community/notice](http://science.yonsei.ac.kr/community/notice)"
+links = crawler.get_science_links(target_url)
 
 for post in links:
-    title, date, content, imgs, files = crawler.scrape_medicine_detail(post['url'])
+    title, date, content, imgs, files = crawler.scrape_science_detail(post['url'])
 
 ```
 
@@ -113,6 +121,7 @@ for post in links:
 3. **`content` (String):** HTML 태그가 살아있는 본문 텍스트
 4. **`images` (List):** 본문 내 이미지 정보 리스트
 * 형식: `[{ "type": "url", "data": "이미지주소", "name": "파일명.jpg" }, ...]`
+* Base64 인코딩 이미지의 경우 `type`이 `"base64"`로 반환되며, `data`에 디코딩된 바이트 데이터가 들어갑니다.
 
 
 5. **`attachments` (List):** 첨부파일 다운로드 링크 또는 파일명 리스트

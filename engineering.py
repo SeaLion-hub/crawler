@@ -1,6 +1,6 @@
 import streamlit as st
 import requests
-from bs4 import BeautifulSoup, NavigableString, Tag
+from bs4 import BeautifulSoup, NavigableString, Tag, Comment
 import base64
 import re
 import os
@@ -32,7 +32,7 @@ th {
 """, unsafe_allow_html=True)
 
 # --------------------------------------------------------------------------------
-# [1] 기존 상세 페이지 크롤링 로직 (그대로 유지)
+# [1] 기존 상세 페이지 크롤링 로직 (주석 무시 로직 추가)
 # --------------------------------------------------------------------------------
 def process_table_html(table_tag):
     for tag in table_tag(['script', 'style', 'noscript', 'iframe']):
@@ -42,16 +42,25 @@ def process_table_html(table_tag):
     return str(table_tag)
 
 def get_text_structurally(element):
+    # ★ 버그 수정: HTML 주석(Comment)인 경우 텍스트로 취급하지 않고 빈 문자열 반환
+    if isinstance(element, Comment):
+        return ""
+        
     text_content = ""
     if isinstance(element, NavigableString):
         return str(element)
     if element.name == 'table':
         return process_table_html(element)
+        
     for child in element.children:
+        # ★ 버그 수정: 자식 노드 탐색 시에도 주석이면 건너뜀
+        if isinstance(child, Comment): 
+            continue
         if child.name in ['script', 'style', 'noscript']: continue
         if child.name == 'br':
             text_content += '\n'
             continue
+            
         child_text = get_text_structurally(child)
         block_tags = ['div', 'p', 'li', 'tr', 'h1', 'h2', 'h3', 'option', 'dd', 'dt']
         if child.name in block_tags:
@@ -163,32 +172,23 @@ def scrape_yonsei_engineering_precise(url):
         return None, f"에러: {e}", None, [], []
 
 # --------------------------------------------------------------------------------
-# [2] 리스트 페이지 크롤러 (새로 추가됨)
+# [2] 리스트 페이지 크롤러
 # --------------------------------------------------------------------------------
 def get_notice_links(list_url):
-    """
-    공지사항 리스트 페이지에서 '공지'가 아닌 '숫자'로 된 게시물의 링크만 추출합니다.
-    """
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(list_url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         
         links = []
-        
-        # 게시판 테이블의 행(tr)들을 찾습니다.
         rows = soup.select('tbody tr')
         
         for row in rows:
             cols = row.find_all('td')
             if not cols: continue
             
-            # 첫 번째 컬럼(번호) 확인
             num_text = cols[0].get_text(strip=True)
-            
-            # ★ 핵심 필터링: 숫자인 경우에만 가져오고, '공지'는 건너뜀
             if num_text.isdigit():
-                # 제목 컬럼(보통 두 번째 혹은 text-left 클래스)에서 a 태그 찾기
                 link_tag = row.find('a')
                 if link_tag and link_tag.get('href'):
                     full_url = urljoin(list_url, link_tag['href'])
@@ -210,7 +210,6 @@ if st.button("최신 공지사항 긁어오기", type="primary"):
     if not list_url_input:
         st.warning("목록 URL을 입력해주세요.")
     else:
-        # 1. 목록에서 링크 추출
         with st.spinner('게시물 목록 스캔 중... (고정 공지는 제외합니다)'):
             post_links = get_notice_links(list_url_input)
         
@@ -219,22 +218,18 @@ if st.button("최신 공지사항 긁어오기", type="primary"):
         else:
             st.success(f"총 {len(post_links)}개의 일반 게시물을 발견했습니다!")
             
-            # 2. 각 링크별로 상세 크롤링 수행
             progress_bar = st.progress(0)
             
             for idx, item in enumerate(post_links):
                 with st.expander(f"#{item['no']}번 게시물 크롤링 중...", expanded=True):
-                    # 상세 크롤링 함수 호출
                     title, date, content, images, attachments = scrape_yonsei_engineering_precise(item['url'])
                     
                     if title:
                         st.markdown(f"### [{item['no']}] {title}")
                         st.caption(f"게시일: {date} | [원본 링크]({item['url']})")
                         
-                        # 본문 (HTML 표 지원)
                         st.markdown(content, unsafe_allow_html=True)
                         
-                        # 이미지
                         if images:
                             st.markdown(f"**🖼️ 포함된 이미지 ({len(images)}장)**")
                             cols = st.columns(min(len(images), 3))
@@ -245,13 +240,11 @@ if st.button("최신 공지사항 긁어오기", type="primary"):
                                     else:
                                         st.image(img_item['data'], use_container_width=True)
                         
-                        # 첨부파일
                         if attachments:
                             st.markdown(f"**📎 첨부파일: {', '.join(attachments)}**")
                     else:
                         st.error("내용 추출 실패")
                 
-                # 진행률 업데이트
                 progress_bar.progress((idx + 1) / len(post_links))
             
             st.success("모든 작업이 완료되었습니다! 🎉")
