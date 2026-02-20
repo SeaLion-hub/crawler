@@ -38,7 +38,23 @@
     * 그누보드(GnuBoard) 기반 사이트 대응.
     * HTML 내부의 주석을 찾아 정밀하게 추출.
 
-### **5) `business.py` (경영 계열)**
+### **5) `glc.py` (글로벌인재대학)**
+* **적용 가능 대학:** 글로벌인재대학 (GLC)
+* **주요 특징:**
+    * KBoard 워드프레스 플러그인 기반 사이트 완벽 대응.
+    * 목록에서 `kboard-list-uid`가 숫자인 일반 게시물만 식별 및 수집.
+    * 본문 `<div class="content-view">` 영역 추출 및 지연 로딩(Lazy Load) 이미지의 `data-orig-src` 속성 대응.
+    * `<button class="kboard-button-download">` 태그에서 순수 다운로드 파일명 추출.
+
+### **6) `uic.py` (언더우드국제대학)**
+* **적용 가능 대학:** 언더우드국제대학 (Underwood International College)
+* **주요 특징:**
+    * 뉴스 대시보드 형태 지원: 카테고리 박스(`<div class="divbox_half_news">`)별 상위 5개 게시물 정밀 수집.
+    * `BoardViewTitle`, `BoardViewAdd`, `BoardContent` ID 기반 구조 탐색.
+    * **[날짜 포맷 자동화]** 영문 월 표기(`Feb 19, 2026`)를 숫자로 자동 파싱하여 `YYYY.MM.DD` 포맷으로 통일.
+    * 아이콘 이미지를 동반한 앵커(`<a>`) 태그 탐색 및 용량 텍스트 필터링을 통한 첨부파일명 추출.
+
+### **7) `business.py` (경영 계열)**
 * **적용 가능 대학:** 경영대학
 * **주요 특징:**
     * **인코딩 보정:** `CP949(EUC-KR)` 인코딩을 자동 감지하여 한글 깨짐 방지.
