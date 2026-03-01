@@ -1,65 +1,80 @@
 
 # 🦅 연세대학교 공지사항 크롤러 모듈 (Yonsei Notice Crawler)
 
-이 저장소는 연세대학교의 다양한 단과대학 공지사항을 수집하는 **독립형 파이썬 모듈 모음**입니다.
-각 단과대학의 홈페이지 구조(CMS)가 다르기 때문에, 반드시 **학과에 맞는 모듈을 import** 하여 사용해야 합니다.
+이 저장소는 연세대학교의 다양한 단과대학 및 부속 기관의 공지사항을 수집하는 **독립형 파이썬 모듈 모음**입니다.
+각 웹사이트의 홈페이지 구조(CMS)가 다르기 때문에, 반드시 **타겟 기관에 맞는 모듈을 import** 하여 사용해야 합니다.
 
 ---
 
 ## 📂 1. 모듈별 지원 대학 및 특징
 
-이식하려는 단과대학에 맞춰 아래 파일을 사용하세요.
+이식하려는 단과대학/기관에 맞춰 아래 파일을 사용하세요.
 
-### **1) `engineering.py` (공학/인문/사회 등 범용 CMS)**
-* **적용 가능 대학:** 공과대학, 학부대학, 약학대학, 상경대학, 문과대학, 생명시스템대학, 신과대학, 사회과학대학, 음악대학, 생활과학대학, 교육과학대학
+### **1) `engineering.py` (범용 CMS 계열)**
+* **적용 가능 대학/기관:** 공과대학, 학부대학, 약학대학, 상경대학, 문과대학, 생명시스템대학, 신과대학, 사회과학대학, 음악대학, 생활과학대학, 교육과학대학, **고등교육혁신원, 교목실, 연구처/산학협력단**
 * **주요 특징:**
     * 목록에서 '공지' 텍스트가 있는 고정 게시물을 제외하고 **번호가 있는 최신글**만 수집.
     * 상세 페이지에서 `'게시글 내용'` 텍스트 옆의 `<dd>` 태그를 찾아 본문을 추출.
-    * **[🔥 최신 버그 픽스] 관리자용 버튼, 불필요한 UI 요소 및 MS Word 문서 복사 시 발생하는 HTML 주석 찌꺼기(`` 등) 완벽 차단 및 제거.**
+    * **[🔥 버그 픽스]** 관리자용 버튼, 불필요한 UI 요소 및 MS Word 문서 복사 시 발생하는 HTML 주석 찌꺼기(`` 등) 완벽 차단 및 제거.
 
 ### **2) `science.py` (이과 계열)**
-* **적용 가능 대학:** 이과대학
+* **적용 가능 대학/기관:** 이과대학
 * **주요 특징:**
     * 목록에서 소리 아이콘(`nxb-list-table__notice-icon`)이 있는 고정 공지를 제외하고 일반 게시물만 수집.
     * 상세 페이지에서 `` 주석 사이의 본문을 정밀 타격하여 추출.
     * 본문 내 섞여 있는 첨부파일 영역 단두대 커팅 및 Base64 인코딩 이미지 완벽 대응.
-    * 정규식 및 구조 분석을 통한 순수 파일명(용량 텍스트 제외) 추출.
 
 ### **3) `medicine.py` (의학 계열)**
-* **적용 가능 대학:** 의과대학, 치과대학, 간호대학
+* **적용 가능 대학/기관:** 의과대학, 치과대학, 간호대학
 * **주요 특징:**
     * 목록에서 `bbs-item` 클래스를 감지하여 게시물 리스트만 정확히 추출.
     * 상세 페이지에서 `.fr-view` 클래스를 기준으로 본문 추출.
     * 본문 하단의 검색엔진용 주석 이후 내용을 잘라냄.
 
 ### **4) `ai.py` (인공지능 계열)**
-* **적용 가능 대학:** 인공지능융합대학
+* **적용 가능 대학/기관:** 인공지능융합대학
 * **주요 특징:**
     * 그누보드(GnuBoard) 기반 사이트 대응.
     * HTML 내부의 주석을 찾아 정밀하게 추출.
 
 ### **5) `glc.py` (글로벌인재대학)**
-* **적용 가능 대학:** 글로벌인재대학 (GLC)
+* **적용 가능 대학/기관:** 글로벌인재대학 (GLC)
 * **주요 특징:**
     * KBoard 워드프레스 플러그인 기반 사이트 완벽 대응.
-    * 목록에서 `kboard-list-uid`가 숫자인 일반 게시물만 식별 및 수집.
     * 본문 `<div class="content-view">` 영역 추출 및 지연 로딩(Lazy Load) 이미지의 `data-orig-src` 속성 대응.
-    * `<button class="kboard-button-download">` 태그에서 순수 다운로드 파일명 추출.
 
 ### **6) `uic.py` (언더우드국제대학)**
-* **적용 가능 대학:** 언더우드국제대학 (Underwood International College)
+* **적용 가능 대학/기관:** 언더우드국제대학 (Underwood International College)
 * **주요 특징:**
     * 뉴스 대시보드 형태 지원: 카테고리 박스(`<div class="divbox_half_news">`)별 상위 5개 게시물 정밀 수집.
-    * `BoardViewTitle`, `BoardViewAdd`, `BoardContent` ID 기반 구조 탐색.
     * **[날짜 포맷 자동화]** 영문 월 표기(`Feb 19, 2026`)를 숫자로 자동 파싱하여 `YYYY.MM.DD` 포맷으로 통일.
-    * 아이콘 이미지를 동반한 앵커(`<a>`) 태그 탐색 및 용량 텍스트 필터링을 통한 첨부파일명 추출.
 
 ### **7) `business.py` (경영 계열)**
-* **적용 가능 대학:** 경영대학
+* **적용 가능 대학/기관:** 경영대학
 * **주요 특징:**
     * **인코딩 보정:** `CP949(EUC-KR)` 인코딩을 자동 감지하여 한글 깨짐 방지.
-    * 목록에서 `<td class="Subject">`를 타격하여 링크 수집.
     * 첨부파일이 `.asp` 다운로드 링크 형태인 경우 대응.
+
+### **8) `yonsei_main.py` (연세대학교 메인 학교공지) ✨NEW**
+* **적용 가능 대학/기관:** 학교공지 (연세대학교 메인 홈페이지)
+* **주요 특징:**
+    * 최신 카드형 리스트(`<ul>/<li>`) 구조 완벽 대응.
+    * `` HTML 주석을 기점으로 상단 고정 공지를 스마트하게 필터링.
+    * 본문 `<div class="txt">` 영역 추출 및 한글 파일명 이미지 깨짐 방지 인코딩 적용.
+
+### **9) `igee.py` (IGEE 계열 CMS) ✨NEW**
+* **적용 가능 대학/기관:** 글로벌사회공헌원, 고등과학원
+* **주요 특징:**
+    * 목록에서 `<tr class="oddline">` 및 `<tr>` 태그 통합 추출.
+    * `BoardViewTitle`, `BoardViewAdd`, `BoardContent` 등 ID 기반의 클래식 CMS 타격.
+    * SSL 인증서 만료/오류 사이트 대응을 위한 `verify=False` 및 보안 경고 숨김 처리 완비.
+
+### **10) `library.py` (학술정보원 도서관) ✨NEW**
+* **적용 가능 대학/기관:** 학술문화처 도서관
+* **주요 특징:**
+    * 상단 고정 공지(`<tr class="always">`) 자동 필터링 및 제외.
+    * 리스트 추출 시 **최대 10개**로 수집 개수 제한 로직 적용.
+    * `boardInfo`, `boardContent`, `additionalItems` 클래스 기반 정밀 추출.
 
 ---
 
@@ -69,7 +84,7 @@
 
 ### **1. 실제 URL 파라미터 주입 필수**
 크롤러 함수는 URL을 인자로 받도록 설계되어 있습니다. 함수를 호출할 때 **해당 학과의 실제 공지사항 목록 URL**을 넘겨줘야 합니다.
-* **잘못된 예:** `get_engineering_links()` (인자 없음)
+* **잘못된 예:** `get_notice_links()` (인자 없음)
 * **올바른 예:** `get_notice_links("https://engineering.yonsei.ac.kr/engineering/notice.do")`
 
 ### **2. 추출 로직 수정 금지**
@@ -88,41 +103,26 @@
 
 ### **필요 라이브러리**
 ```bash
-pip install requests beautifulsoup4
+pip install requests beautifulsoup4 urllib3
 
 ```
 
-### **사용 코드 예시**
-
-**예시 1: 범용 CMS 적용 대학 크롤링 (`engineering.py`)**
+### **사용 코드 예시 (도서관 크롤링)**
 
 ```python
-import engineering as crawler
+import library as crawler
 
 # 1. 목록 URL 설정 (실제 사이트 주소)
-target_url = "[https://engineering.yonsei.ac.kr/engineering/notice.do](https://engineering.yonsei.ac.kr/engineering/notice.do)"
+target_url = "[https://library.yonsei.ac.kr/bbs/list/1?pn=1](https://library.yonsei.ac.kr/bbs/list/1?pn=1)"
 
-# 2. 목록 가져오기
-links = crawler.get_notice_links(target_url)
+# 2. 목록 가져오기 (최대 10개)
+links = crawler.get_library_links(target_url)
 
 # 3. 상세 내용 크롤링
 for post in links:
     print(f"번호: {post['no']}")
     # 반환값: 제목, 날짜, 본문(HTML), 이미지리스트, 첨부파일리스트
-    title, date, content, imgs, files = crawler.scrape_yonsei_engineering_precise(post['url'])
-
-```
-
-**예시 2: 이과대학 크롤링 (`science.py`)**
-
-```python
-import science as crawler
-
-target_url = "[http://science.yonsei.ac.kr/community/notice](http://science.yonsei.ac.kr/community/notice)"
-links = crawler.get_science_links(target_url)
-
-for post in links:
-    title, date, content, imgs, files = crawler.scrape_science_detail(post['url'])
+    title, date, content, imgs, files = crawler.scrape_library_detail(post['url'])
 
 ```
 
